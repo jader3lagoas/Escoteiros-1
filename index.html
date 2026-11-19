@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Certificado</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:650px;margin:auto;padding:15px}
+label{display:block;margin-top:12px;font-weight:bold}
+input,select{width:100%;padding:10px;font-size:16px;margin-top:4px;box-sizing:border-box}
+button{width:100%;padding:14px;font-size:18px;background:#1a73e8;color:#fff;border:0;border-radius:10px;margin-top:15px;cursor:pointer}
+#preview{width:100%;border:2px solid #333;margin-top:15px;touch-action:none;cursor:move}
+.row{display:flex;gap:10px}.row>div{flex:1}
+#msg{font-weight:bold;margin-top:10px}
+.barra{margin-top:12px;background:#f2f2f2;padding:12px;border-radius:10px}
+.barra input[type=range]{width:100%}
+small{color:#555}
+</style>
+</head>
+<body>
+<h2>🏆 Certificado de Participação</h2>
+<p id="tituloRodada"></p>
+<label>Seu nome completo:</label>
+<input id="nome" placeholder="Ex: JOÃO DA SILVA">
+<label>Seu indicativo:</label>
+<input id="indicativo" placeholder="PU1ABC" style="text-transform:uppercase">
+<div class="row">
+<div>
+<label>Cor da letra:</label>
+<select id="cor">
+<option value="#ffffff">Branco</option>
+<option value="#000000">Preto</option>
+<option value="#FFD700">Dourado</option>
+<option value="#FFE600">Amarelo</option>
+<option value="#00FF00">Verde</option>
+<option value="#00BFFF">Azul Claro</option>
+<option value="#FF0000">Vermelho</option>
+</select>
+</div>
+<div>
+<label>Tamanho da letra:</label>
+<select id="tamanho">
+<option value="48">Pequeno</option>
+<option value="64" selected>Médio</option>
+<option value="84">Grande</option>
+<option value="100">Extra Grande</option>
+</select>
+</div>
+</div>
+<button onclick="verificar()">🔓 Verificar e Liberar Certificado</button>
+<div id="msg"></div>
+<canvas id="preview" width="1200" height="800" style="display:none"></canvas>
+<div id="controles" style="display:none">
+<div class="barra">
+<label>↕️ Posição do nome - arraste na foto ou use a barrinha:</label>
+<input type="range" id="posNome" min="100" max="700" value="380" oninput="pos.nomeY=this.value; desenhar()">
+<label>↕️ Posição do indicativo - arraste na foto ou use a barrinha:</label>
+<input type="range" id="posInd" min="100" max="750" value="460" oninput="pos.indY=this.value; desenhar()">
+<small>Você pode arrastar o nome e o indicativo direto na foto com o dedo.</small>
+</div>
+<button onclick="baixar()" style="background:#0a7a42">⬇️ Baixar Certificado</button>
+</div>
+<script>
+const CONFIG = {
+  TG: "72429",
+  NOME_RODADA: "Rodada TG 72429",
+  DIA: "Quinta",
+  HORARIO: "21:30 às 22:30",
+  DATA: "19/11/2026",
+  FOTO: "fundo.jpg",
+  LISTA_TEXTO: `
+PU4GGG
+PU9FFF
+PU7TTT
+`,
+};
+function pegarLista(){
+  return CONFIG.LISTA_TEXTO.split(/[\n,; ]+/).map(s => s.trim().toUpperCase()).filter(s => s.length > 0);
+}
+document.getElementById("tituloRodada").innerText = CONFIG.NOME_RODADA + " - " + CONFIG.DIA + " " + CONFIG.HORARIO + " - " + CONFIG.DATA;
+let pos = { nomeX: 600, nomeY: 380, indX: 600, indY: 460 };
+let arrastando = null;
+let imgFundo = null;
+function verificar(){
+  const nome = document.getElementById("nome").value.trim();
+  const ind = document.getElementById("indicativo").value.trim().toUpperCase();
+  const msg = document.getElementById("msg");
+  if(!nome || !ind){ msg.style.color="red"; msg.innerText = "Preencha nome e indicativo!"; return; }
+  const LISTA = pegarLista();
+  if(LISTA.length === 0){ liberado(); return; }
+  if(LISTA.includes(ind)){ liberado(); }
+  else { msg.style.color="red"; msg.innerText = "Você não participou desta rodada. Verifique o indicativo."; }
+}
+function liberado(){
+  const msg = document.getElementById("msg");
+  msg.style.color="green";
+  msg.innerText = "✅ Liberado! Agora arraste seu nome e indicativo pra onde quiser.";
+  document.getElementById("preview").style.display = "block";
+  document.getElementById("controles").style.display = "block";
+  desenhar();
+}
+function desenhar(){
+  const canvas = document.getElementById("preview");
+  const ctx = canvas.getContext("2d");
+  if(!imgFundo){ imgFundo = new Image(); imgFundo.onload = desenhar; imgFundo.src = CONFIG.FOTO; return; }
+  ctx.clearRect(0,0,1200,800);
+  ctx.drawImage(imgFundo, 0, 0, 1200, 800);
+  ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 12;
+  ctx.fillStyle = document.getElementById("cor").value;
+  ctx.textAlign = "center";
+  ctx.font = "bold " + document.getElementById("tamanho").value + "px Arial";
+  ctx.fillText(document.getElementById("nome").value.toUpperCase(), pos.nomeX, pos.nomeY);
+  ctx.font = "bold 36px Arial";
+  ctx.fillText(document.getElementById("indicativo").value.toUpperCase(), pos.indX, pos.indY);
+  ctx.textAlign = "right";
+  ctx.font = "bold 26px Arial";
+  ctx.fillText(CONFIG.DATA, 1150, 770);
+  ctx.font = "22px Arial";
+  ctx.fillText(CONFIG.NOME_RODADA + " - " + CONFIG.HORARIO, 1150, 740);
+}
+const canvas = document.getElementById("preview");
+function pegaPos(e){
+  const r = canvas.getBoundingClientRect();
+  const cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+  const cy = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+  return { x: cx * 1200 / r.width, y: cy * 800 / r.height };
+}
+canvas.addEventListener("mousedown", e => {
+  const p = pegaPos(e);
+  if(Math.abs(p.y - pos.nomeY) < 60) arrastando = "nome";
+  else if(Math.abs(p.y - pos.indY) < 50) arrastando = "ind";
+});
+canvas.addEventListener("touchstart", e => {
+  const p = pegaPos(e);
+  if(Math.abs(p.y - pos.nomeY) < 60) arrastando = "nome";
+  else if(Math.abs(p.y - pos.indY) < 50) arrastando = "ind";
+}, {passive:true});
+window.addEventListener("mousemove", e => {
+  if(!arrastando) return;
+  const p = pegaPos(e);
+  if(arrastando==="nome"){ pos.nomeX=p.x; pos.nomeY=p.y; document.getElementById("posNome").value=p.y; }
+  else { pos.indX=p.x; pos.indY=p.y; document.getElementById("posInd").value=p.y; }
+  desenhar();
+});
+window.addEventListener("touchmove", e => {
+  if(!arrastando) return;
+  const p = pegaPos(e);
+  if(arrastando==="nome"){ pos.nomeX=p.x; pos.nomeY=p.y; document.getElementById("posNome").value=p.y; }
+  else { pos.indX=p.x; pos.indY=p.y; document.getElementById("posInd").value=p.y; }
+  desenhar();
+}, {passive:true});
+window.addEventListener("mouseup", ()=> arrastando=null);
+window.addEventListener("touchend", ()=> arrastando=null);
+document.getElementById("cor").onchange = desenhar;
+document.getElementById("tamanho").onchange = desenhar;
+function baixar(){
+  const a = document.createElement("a");
+  a.download = "certificado-" + document.getElementById("indicativo").value + ".png";
+  a.href = document.getElementById("preview").toDataURL("image/png");
+  a.click();
+}
+</script>
+</body>
+</html>
