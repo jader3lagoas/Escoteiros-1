@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -6,20 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Certificado - Rodada TG 72429</title>
 <style>
-body{font-family:Arial,sans-serif;text-align:center;padding:30px;background:#f2f2f2}
-.box{background:#fff;max-width:400px;margin:auto;padding:25px;border-radius:12px;box-shadow:0 0 10px #ccc}
-input{width:90%;padding:12px;font-size:18px;text-align:center;text-transform:uppercase;margin:10px 0}
-button{width:95%;padding:12px;font-size:18px;background:#1a73e8;color:#fff;border:0;border-radius:8px;cursor:pointer}
-#msg{margin-top:15px;font-weight:bold}
+body{font-family:Arial,sans-serif;text-align:center;padding:20px;background:#f2f2f2}
+.box{background:#fff;max-width:500px;margin:auto;padding:20px;border-radius:12px}
+input{width:90%;padding:12px;font-size:18px;text-align:center;text-transform:uppercase}
+button{padding:12px 20px;font-size:18px;background:#1a73e8;color:#fff;border:0;border-radius:8px;margin-top:10px;cursor:pointer}
+#msg{margin-top:12px;font-weight:bold}
+#cert{margin-top:20px;display:none;background:#fffbe6;border:2px solid #d4af37;padding:20px;border-radius:12px}
+#cert h2{margin:0;color:#8a6d00}
 </style>
 </head>
 <body>
 <div class="box">
 <h2>📻 Certificado - Rodada TG 72429</h2>
 <p>Quinta-feira 21:30 às 22:30</p>
-<input id="indicativo" placeholder="SEU INDICATIVO ex: PU1ABC">
+<input id="indicativo" placeholder="SEU INDICATIVO">
+<br>
 <button onclick="verificar()">Verificar e Gerar Certificado</button>
 <div id="msg"></div>
+
+<div id="cert">
+<h2>🏆 CERTIFICADO DE PARTICIPAÇÃO</h2>
+<p>Certificamos que</p>
+<h3 id="c-ind">-</h3>
+<p>Participou da Rodada</p>
+<p><b>TG 72429 - Quinta-feira 21:30 às 22:30</b></p>
+<p id="c-data"></p>
+<br>
+<button onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+</div>
 </div>
 
 <script>
@@ -29,17 +42,29 @@ function verificar(){
   const ind = document.getElementById("indicativo").value.trim().toUpperCase();
   const msg = document.getElementById("msg");
   if(!ind){ msg.innerText = "Digite seu indicativo!"; return; }
+  msg.style.color = "#000";
   msg.innerText = "Verificando...";
+  document.getElementById("cert").style.display = "none";
   const s = document.createElement("script");
   s.src = URL_ROBO + "?indicativo=" + encodeURIComponent(ind) + "&callback=retorno&x=" + Date.now();
+  s.onerror = function(){ msg.style.color="red"; msg.innerText = "Erro: robô fora do ar ou link errado. Confira o URL_ROBO."; };
   document.body.appendChild(s);
+  // Se em 8 segundos não responder, avisa
+  setTimeout(function(){
+    if(document.getElementById("msg").innerText === "Verificando..."){
+      msg.style.color="red";
+      msg.innerText = "Travou no Verificando... O link do robô está errado ou apagado. Use o link que termina com /exec que funcionou no teste.";
+    }
+  }, 8000);
 }
 function retorno(dados){
   const msg = document.getElementById("msg");
   if(!dados.ok){ msg.style.color="red"; msg.innerText = dados.erro; return; }
   msg.style.color="green";
-  msg.innerText = "✅ Liberado! Você participou da rodada!";
-  alert("Liberado! Agora pode gerar seu certificado.");
+  msg.innerText = "✅ Liberado!";
+  document.getElementById("c-ind").innerText = dados.indicativo || document.getElementById("indicativo").value.toUpperCase();
+  document.getElementById("c-data").innerText = "Três Lagoas - MS, " + new Date().toLocaleDateString("pt-BR");
+  document.getElementById("cert").style.display = "block";
 }
 </script>
 </body>
