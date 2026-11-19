@@ -91,6 +91,26 @@ h1 {
     background: #125da7;
 }
 
+#botaoVerificar {
+    width: 100%;
+    padding: 12px;
+    margin-top: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    background: #2e7d32;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+#msgVerificacao {
+    margin-top: 10px;
+    text-align: center;
+    font-weight: bold;
+    min-height: 22px;
+}
+
 #certificado {
     position: relative;
     width: 100%;
@@ -191,7 +211,6 @@ h1 {
         >
     </div>
 
-
     <div class="campo">
 
         <label for="indicativo">
@@ -206,6 +225,13 @@ h1 {
 
     </div>
 
+    <div class="campo">
+        <label for="dmrId">DMR ID:</label>
+        <input type="text" id="dmrId" placeholder="Digite seu DMR ID - ex: 7241234" inputmode="numeric">
+    </div>
+
+    <button id="botaoVerificar" onclick="verificarParticipacao()">VERIFICAR PARTICIPAÇÃO NA RODADA</button>
+    <div id="msgVerificacao"></div>
 
     <div class="linha">
 
@@ -222,7 +248,6 @@ h1 {
             >
 
         </div>
-
 
         <div class="campo">
 
@@ -242,7 +267,6 @@ h1 {
 
     </div>
 
-
     <button
         id="botao"
         onclick="baixarCertificado()"
@@ -252,7 +276,6 @@ h1 {
 
 </div>
 
-
 <div id="certificado">
 
     <div id="identificacao"></div>
@@ -261,14 +284,15 @@ h1 {
 
 </div>
 
-
 <script>
 
+const URL_ROBO = "https://script.google.com/macros/s/AKfycbzK1FwKYmj1hfzP1I41vKNVpB8Wn3CL-ioS2fCvInhzEinOxrbf1vHfv8jOAvOntr9Ccw/exec";
+let liberado = false;
 
 /*
-========================================
+
 ELEMENTOS
-========================================
+
 */
 
 const nomeInput =
@@ -276,6 +300,12 @@ const nomeInput =
 
 const indicativoInput =
     document.getElementById("indicativo");
+
+const dmrInput =
+    document.getElementById("dmrId");
+
+const msgVerificacao =
+    document.getElementById("msgVerificacao");
 
 const corInput =
     document.getElementById("cor");
@@ -292,11 +322,10 @@ const rodape =
 const certificado =
     document.getElementById("certificado");
 
-
 /*
-========================================
+
 POSIÇÃO DO TEXTO
-========================================
+
 
 O certificado trabalha em uma área
 virtual de 1000 x 707.
@@ -308,11 +337,10 @@ proporcional em qualquer tela.
 let posicaoX = 500;
 let posicaoY = 353.5;
 
-
 /*
-========================================
+
 DATA ATUAL
-========================================
+
 */
 
 function dataAtual() {
@@ -342,15 +370,13 @@ function dataAtual() {
     );
 }
 
-
 /*
-========================================
+
 ATUALIZAÇÃO DA TELA
-========================================
+
 */
 
 function atualizar() {
-
 
     /*
     Indicativo sempre em maiúsculo
@@ -358,7 +384,6 @@ function atualizar() {
 
     indicativoInput.value =
         indicativoInput.value.toUpperCase();
-
 
     const nome =
         nomeInput.value.trim();
@@ -374,7 +399,6 @@ function atualizar() {
             tamanhoInput.value
         ) || 52;
 
-
     /*
     Cor
     */
@@ -384,7 +408,6 @@ function atualizar() {
 
     rodape.style.color =
         cor;
-
 
     /*
     ESCALA PROPORCIONAL
@@ -402,7 +425,6 @@ function atualizar() {
     const escala =
         largura / 1000;
 
-
     /*
     TAMANHO DO INDICATIVO/NOME PRINCIPAL
     */
@@ -412,7 +434,6 @@ function atualizar() {
             tamanho *
             escala
         ) + "px";
-
 
     /*
     TEXTO PRINCIPAL
@@ -439,7 +460,6 @@ function atualizar() {
 
     }
 
-
     /*
     RODAPÉ
     */
@@ -448,7 +468,6 @@ function atualizar() {
         nome &&
         indicativo
     ) {
-
 
         /*
         Quando existem Nome + Indicativo,
@@ -459,7 +478,6 @@ function atualizar() {
             nome +
             " — Emitido em " +
             dataAtual();
-
 
         rodape.style.fontSize =
             (
@@ -472,7 +490,6 @@ function atualizar() {
 
     else {
 
-
         /*
         Somente indicativo ou somente nome.
 
@@ -483,7 +500,6 @@ function atualizar() {
             "Emitido em " +
             dataAtual();
 
-
         rodape.style.fontSize =
             (
                 tamanho *
@@ -493,7 +509,6 @@ function atualizar() {
 
     }
 
-
     /*
     Mantém a posição proporcional.
     */
@@ -502,15 +517,13 @@ function atualizar() {
 
 }
 
-
 /*
-========================================
+
 POSICIONAR TEXTO
-========================================
+
 */
 
 function posicionarTexto() {
-
 
     const largura =
         certificado.clientWidth;
@@ -521,13 +534,11 @@ function posicionarTexto() {
     const escala =
         largura / 1000;
 
-
     identificacao.style.left =
         (
             posicaoX *
             escala
         ) + "px";
-
 
     identificacao.style.top =
         (
@@ -537,11 +548,10 @@ function posicionarTexto() {
 
 }
 
-
 /*
-========================================
+
 ARRASTAR COM DEDO OU MOUSE
-========================================
+
 */
 
 let arrastando = false;
@@ -552,26 +562,21 @@ let inicioY = 0;
 let inicioPosicaoX = 0;
 let inicioPosicaoY = 0;
 
-
 identificacao.addEventListener(
     "pointerdown",
     function(event) {
 
-
         arrastando = true;
-
 
         identificacao.setPointerCapture(
             event.pointerId
         );
-
 
         inicioX =
             event.clientX;
 
         inicioY =
             event.clientY;
-
 
         inicioPosicaoX =
             posicaoX;
@@ -582,11 +587,9 @@ identificacao.addEventListener(
     }
 );
 
-
 identificacao.addEventListener(
     "pointermove",
     function(event) {
-
 
         if (!arrastando) {
 
@@ -594,13 +597,11 @@ identificacao.addEventListener(
 
         }
 
-
         const largura =
             certificado.clientWidth;
 
         const altura =
             certificado.clientHeight;
-
 
         /*
         Converte o movimento da tela
@@ -613,13 +614,11 @@ identificacao.addEventListener(
         const escalaY =
             707 / altura;
 
-
         const deslocamentoX =
             (
                 event.clientX -
                 inicioX
             ) * escalaX;
-
 
         const deslocamentoY =
             (
@@ -627,16 +626,13 @@ identificacao.addEventListener(
                 inicioY
             ) * escalaY;
 
-
         posicaoX =
             inicioPosicaoX +
             deslocamentoX;
 
-
         posicaoY =
             inicioPosicaoY +
             deslocamentoY;
-
 
         /*
         Impede que o texto saia
@@ -652,7 +648,6 @@ identificacao.addEventListener(
                 )
             );
 
-
         posicaoY =
             Math.max(
                 0,
@@ -662,12 +657,10 @@ identificacao.addEventListener(
                 )
             );
 
-
         posicionarTexto();
 
     }
 );
-
 
 identificacao.addEventListener(
     "pointerup",
@@ -678,7 +671,6 @@ identificacao.addEventListener(
     }
 );
 
-
 identificacao.addEventListener(
     "pointercancel",
     function() {
@@ -688,11 +680,10 @@ identificacao.addEventListener(
     }
 );
 
-
 /*
-========================================
+
 ATUALIZAÇÃO AUTOMÁTICA
-========================================
+
 */
 
 nomeInput.addEventListener(
@@ -715,11 +706,10 @@ tamanhoInput.addEventListener(
     atualizar
 );
 
-
 /*
-========================================
+
 QUANDO A TELA MUDA DE TAMANHO
-========================================
+
 */
 
 window.addEventListener(
@@ -727,35 +717,74 @@ window.addEventListener(
     atualizar
 );
 
-
 /*
-========================================
-BAIXAR CERTIFICADO
-========================================
+
+VERIFICAR PARTICIPAÇÃO - QAPDMR
+
 */
 
-function baixarCertificado() {
+async function verificarParticipacao() {
+    const dmrId = dmrInput.value.trim();
+    const indicativo = indicativoInput.value.trim().toUpperCase();
+    if (!dmrId || !indicativo) {
+        msgVerificacao.style.color = "red";
+        msgVerificacao.textContent = "⚠️ Preencha Indicativo e DMR ID primeiro.";
+        return false;
+    }
+    msgVerificacao.style.color = "#333";
+    msgVerificacao.textContent = "Verificando... aguarde...";
+    try {
+        const resp = await fetch(URL_ROBO, {
+            method: "POST",
+            body: JSON.stringify({ dmrId: dmrId, indicativo: indicativo })
+        });
+        const dados = await resp.json();
+        if (!dados.ok) {
+            liberado = false;
+            msgVerificacao.style.color = "red";
+            msgVerificacao.textContent = "❌ " + dados.erro;
+            return false;
+        }
+        liberado = true;
+        msgVerificacao.style.color = "green";
+        msgVerificacao.textContent = "✅ Liberado! Você participou da rodada. Agora pode baixar.";
+        return true;
+    } catch (e) {
+        liberado = false;
+        msgVerificacao.style.color = "red";
+        msgVerificacao.textContent = "❌ Erro ao conectar no robô. Tente de novo em 1 minuto.";
+        return false;
+    }
+}
 
+/*
+
+BAIXAR CERTIFICADO
+
+*/
+
+async function baixarCertificado() {
+
+    if (!liberado) {
+        const ok = await verificarParticipacao();
+        if (!ok) return;
+    }
 
     const nome =
         nomeInput.value.trim();
-
 
     const indicativo =
         indicativoInput.value
         .trim()
         .toUpperCase();
 
-
     const cor =
         corInput.value;
-
 
     const tamanho =
         Number(
             tamanhoInput.value
         ) || 52;
-
 
     /*
     Cria imagem final
@@ -767,20 +796,16 @@ function baixarCertificado() {
             "canvas"
         );
 
-
     canvas.width = 1000;
     canvas.height = 707;
-
 
     const ctx =
         canvas.getContext(
             "2d"
         );
 
-
     const fundo =
         new Image();
-
 
     /*
     Carrega o certificado.
@@ -788,7 +813,6 @@ function baixarCertificado() {
 
     fundo.onload =
         function() {
-
 
         /*
         Fundo
@@ -802,14 +826,12 @@ function baixarCertificado() {
             707
         );
 
-
         /*
         COR
         */
 
         ctx.fillStyle =
             cor;
-
 
         /*
         TEXTO PRINCIPAL
@@ -820,18 +842,14 @@ function baixarCertificado() {
             tamanho +
             "px Arial";
 
-
         ctx.textAlign =
             "center";
-
 
         ctx.textBaseline =
             "middle";
 
-
         let textoPrincipal =
             "";
-
 
         if (indicativo) {
 
@@ -847,7 +865,6 @@ function baixarCertificado() {
 
         }
 
-
         /*
         Desenha o texto principal
         */
@@ -862,7 +879,6 @@ function baixarCertificado() {
 
         }
 
-
         /*
         RODAPÉ
         */
@@ -870,10 +886,8 @@ function baixarCertificado() {
         ctx.textAlign =
             "right";
 
-
         ctx.textBaseline =
             "bottom";
-
 
         const textoRodape =
             nome
@@ -883,7 +897,6 @@ function baixarCertificado() {
 
                 : "Emitido em " +
                   dataAtual();
-
 
         /*
         Tamanho do rodapé.
@@ -912,12 +925,10 @@ function baixarCertificado() {
                     tamanho * 0.28
                   );
 
-
         ctx.font =
             "bold " +
             tamanhoRodape +
             "px Arial";
-
 
         /*
         Posição do rodapé.
@@ -929,7 +940,6 @@ function baixarCertificado() {
             687
         );
 
-
         /*
         CRIA O DOWNLOAD
         */
@@ -939,21 +949,17 @@ function baixarCertificado() {
                 "a"
             );
 
-
         link.download =
             "certificado.png";
-
 
         link.href =
             canvas.toDataURL(
                 "image/png"
             );
 
-
         link.click();
 
     };
-
 
     /*
     Nome do arquivo de fundo.
@@ -964,11 +970,10 @@ function baixarCertificado() {
 
 }
 
-
 /*
-========================================
+
 INICIALIZAÇÃO
-========================================
+
 */
 
 atualizar();
