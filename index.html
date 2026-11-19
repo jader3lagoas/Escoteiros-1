@@ -99,17 +99,26 @@ indicativoInput.addEventListener("input", atualizar);
 corInput.addEventListener("input", atualizar);
 tamanhoInput.addEventListener("input", atualizar);
 window.addEventListener("resize", atualizar);
-async function verificarParticipacao() {
+function verificarParticipacao() {
     const indicativo = indicativoInput.value.trim().toUpperCase();
-    if (!indicativo) { msgVerificacao.style.color = "red"; msgVerificacao.textContent = "⚠️ Preencha seu Indicativo primeiro."; return false; }
+    if (!indicativo) { msgVerificacao.style.color = "red"; msgVerificacao.textContent = "⚠️ Preencha seu Indicativo primeiro."; return Promise.resolve(false); }
     msgVerificacao.style.color = "#333";
     msgVerificacao.textContent = "Verificando... aguarde...";
-    try {
-        const resp = await fetch(URL_ROBO + "?indicativo=" + encodeURIComponent(indicativo));
-        const dados = await resp.json();
-        if (!dados.ok) { liberado = false; msgVerificacao.style.color = "red"; msgVerificacao.textContent = "❌ " + dados.erro; return false; }
-        liberado = true; msgVerificacao.style.color = "green"; msgVerificacao.textContent = "✅ Liberado! Você participou da rodada. Agora pode baixar."; return true;
-    } catch (e) { liberado = false; msgVerificacao.style.color = "red"; msgVerificacao.textContent = "❌ Erro ao conectar no robô. Tente de novo em 1 minuto."; return false; }
+    return new Promise(function(resolve) {
+        const nomeCallback = "cb_" + Date.now();
+        window[nomeCallback] = function(dados) {
+            delete window[nomeCallback];
+            const s = document.getElementById(nomeCallback); if (s) s.remove();
+            if (!dados.ok) { liberado = false; msgVerificacao.style.color = "red"; msgVerificacao.textContent = "❌ " + dados.erro; resolve(false); return; }
+            liberado = true; msgVerificacao.style.color = "green"; msgVerificacao.textContent = "✅ Liberado! Você participou da rodada. Agora pode baixar."; resolve(true);
+        };
+        const script = document.createElement("script");
+        script.id = nomeCallback;
+        script.src = URL_ROBO + "?indicativo=" + encodeURIComponent(indicativo) + "&callback=" + nomeCallback;
+        script.onerror = function() { liberado = false; msgVerificacao.style.color = "red"; msgVerificacao.textContent = "❌ Erro ao conectar no robô. Tente de novo em 1 minuto."; resolve(false); };
+        document.body.appendChild(script);
+        setTimeout(function() { if (window[nomeCallback]) { delete window[nomeCallback]; msgVerificacao.style.color = "red"; msgVerificacao.textContent = "❌ Tempo esgotado. Tente de novo."; resolve(false); } }, 15000);
+    });
 }
 async function baixarCertificado() {
     if (!liberado) { const ok = await verificarParticipacao(); if (!ok) return; }
